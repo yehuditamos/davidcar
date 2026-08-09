@@ -28,7 +28,8 @@ export default function Home() {
   const [started,setStarted] = useState(false);
   const [step,setStep] = useState(0);
   const [answers,setAnswers] = useState<Answers>({});
-  const [car,setCar] = useState({make:"",model:"",year:"",km:"",price:""});\n  const [detailsSubmitted,setDetailsSubmitted] = useState(false);
+  const [car,setCar] = useState({make:"",model:"",year:"",km:"",price:""});
+  const [detailsSubmitted,setDetailsSubmitted] = useState(false);
   const [done,setDone] = useState(false);
   const [showExit,setShowExit] = useState(false);
   const rawRisk = useMemo(() => questions.reduce((sum,q) => {
