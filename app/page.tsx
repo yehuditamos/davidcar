@@ -43,7 +43,12 @@ export default function Home() {
   if(!started) return <main className="landing" dir="rtl">
     <header className="topbar"><div className="brand"><span className="brandmark">ד</span><div><b>המומחה של דוד</b><small>לא קונים חתול בשק</small></div></div><span className="tag">בדיקה חכמה לרכב יד שנייה</span></header>
     <section className="hero">
-      <div className="heroCopy"><span className="eyebrow">לפני שמעבירים מקדמה</span><h1>הרכב נראה מציאה.<br/><em>בואו נראה מה הוא מסתיר.</em></h1><p>בדיקה חכמה וקפדנית לפני קניית רכב יד שנייה. בתוך כמה דקות תקבלו ציון, דגלים אדומים ופסק דין ברור.</p><div className="heroActions"><button className="primary" onClick={()=>setStarted(true)}>מתחילים בדיקה <span>←</span></button><span className="time">⏱ כ־5 דקות</span></div></div>
+      <div className="heroCopy">
+        <span className="eyebrow">לפני שמעבירים מקדמה</span>
+        <h1><span>הרכב נראה מציאה.</span><em>בואו נבדוק מה הוא מסתיר.</em></h1>
+        <p><span>בדיקה חכמה וקפדנית לפני קניית רכב יד שנייה.</span><span>בתוך כחמש דקות תקבלו ציון, דגלים אדומים ופסק דין ברור.</span></p>
+        <div className="heroActions"><button className="primary" onClick={()=>setStarted(true)}>מתחילים בדיקה <span>←</span></button><span className="time">כחמש דקות ⏱</span></div>
+      </div>
       <div className="gaugeCard"><div className="carIcon">🚘</div><div className="gauge"><div className="gaugeInner"><b>?</b><span>ציון הרכב</span></div></div><div className="miniFlags"><span>✓ היסטוריית טיפולים</span><span>! תאונות ושלדה</span><span>⌁ נסיעת מבחן</span></div></div>
     </section>
     <section className="trust"><div><b>01</b><span>מכניסים פרטים</span></div><i>←</i><div><b>02</b><span>בודקים כמו מקצוענים</span></div><i>←</i><div><b>03</b><span>מקבלים פסק דין</span></div></section>
