@@ -79,3 +79,5 @@ body{font-family:var(--font-rubik),Arial,sans-serif}
   .checks ul{flex-direction:column;gap:10px}
   .checks li{font-size:15px}
 }
+
+.eyebrow{display:block;text-align:center;width:100%}
