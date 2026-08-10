@@ -6,7 +6,7 @@ export async function POST(request: Request) {
   try {
     const { pin } = await request.json();
     const sql = getDb();
-    const rows = await sql`SELECT pin_hash FROM admin_credentials WHERE id = 1`;
+    const rows = await sql`SELECT pin_hash FROM admin_credentials WHERE id = 1` as { pin_hash: string }[];
     if (!rows.length || hashValue(String(pin || "").trim().toLowerCase()) !== rows[0].pin_hash) {
       return Response.json({ error: "קוד שגוי" }, { status: 401 });
     }
