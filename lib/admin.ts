@@ -16,7 +16,7 @@ export async function isAdmin() {
     SELECT token_hash FROM admin_sessions
     WHERE token_hash = ${hashValue(token)} AND expires_at > now()
     LIMIT 1
-  `;
+  ` as { token_hash: string }[];
   return rows.length === 1;
 }
 
