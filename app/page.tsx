@@ -1,11 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { track } from "@vercel/analytics";
 
 type Answers = Record<string, string>;
+type Question = { id:string; section:string; title:string; hint:string; options:[string,string,number][] };
 
-const questions = [
+const defaultQuestions: Question[] = [
   { id:"seller", section:"מסמכים", title:"הרכב רשום על שם המוכר?", hint:"השוו בין תעודה מזהה לרישיון הרכב.", options:[["yes","כן, הכול תואם",0],["family","רשום על בן משפחה",10],["dealer","המוכר הוא סוחר",14],["unknown","לא בדקתי",22]] },
   { id:"license", section:"מסמכים", title:"פרטי הרכב תואמים לרישיון?", hint:"בדקו מספר רכב, דגם, שנה ומספר שלדה.", options:[["match","הכול תואם",0],["minor","לא בדקתי הכול",8],["mismatch","מצאתי פרט לא תואם",30],["unknown","לא יודע/ת איפה לבדוק",16]] },
   { id:"ownership", section:"מסמכים", title:"כמה בעלים היו לרכב?", hint:"המספר וסוג הבעלות מופיעים ברישיון.", options:[["first","יד ראשונה פרטית",0],["second","יד שנייה פרטית",4],["many","שלוש ידיים ומעלה",10],["lease","ליסינג, השכרה או חברה",14]] },
@@ -40,7 +41,7 @@ const questions = [
 
   { id:"pressure", section:"עסקה", title:"המוכר לוחץ לסגור מהר?", hint:"לחץ להעביר מקדמה לפני בדיקה הוא דגל אדום.", options:[["calm","לא, נותן זמן לבדוק",0],["some","יש מעט לחץ",10],["strong","לוחץ להעביר כסף עכשיו",30],["unknown","לא בטוח/ה",7]] },
   { id:"inspection", section:"עסקה", title:"המוכר מסכים לבדיקה במכון שתבחרו?", hint:"אתם בוחרים את המכון, לא המוכר.", options:[["yes","כן, בלי הסתייגות",0],["conditions","מסכים רק למכון מסוים",16],["no","לא מסכים לבדיקה",40],["unknown","עוד לא שאלתי",12]] },
-] as const;
+];
 
 function riskCopy(score:number) {
   if (score <= 18) return { verdict:"שווה להתקדם לבדיקה", label:"סיכון נמוך", color:"good", text:"לא עלו כרגע סימנים חריגים, אבל לפני קנייה ממשיכים לבדיקה מקצועית מלאה." };
@@ -49,7 +50,24 @@ function riskCopy(score:number) {
   return { verdict:"דוד אומר: לוותר", label:"סיכון חריג", color:"danger", text:"יותר מדי סימני אזהרה. יש מספיק רכבים בשוק. לא צריך להתאהב דווקא בחתול שבשק." };
 }
 
+function recordEvent(eventName:string, data?:Record<string,string>) {
+  track(eventName, data);
+  if (typeof window === "undefined") return;
+  let sessionId = localStorage.getItem("davidcar_session");
+  if (!sessionId) {
+    sessionId = typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : `session-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    localStorage.setItem("davidcar_session", sessionId);
+  }
+  fetch("/api/events", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ eventName, sessionId }),
+    keepalive: true,
+  }).catch(() => {});
+}
+
 export default function Home() {
+  const [questions,setQuestions] = useState<Question[]>(defaultQuestions);
   const [started,setStarted] = useState(false);
   const [step,setStep] = useState(0);
   const [answers,setAnswers] = useState<Answers>({});
@@ -57,6 +75,13 @@ export default function Home() {
   const [detailsSubmitted,setDetailsSubmitted] = useState(false);
   const [done,setDone] = useState(false);
   const [showExit,setShowExit] = useState(false);
+  useEffect(() => {
+    recordEvent("app_open");
+    fetch("/api/questions", { cache: "no-store" })
+      .then(response => response.ok ? response.json() : [])
+      .then(data => { if (Array.isArray(data) && data.length) setQuestions(data); })
+      .catch(() => {});
+  }, []);
   const rawRisk = useMemo(() => questions.reduce((sum,q) => {
     const picked = q.options.find(o=>o[0]===answers[q.id]); return sum + (picked ? Number(picked[2]) : 0);
   },0),[answers]);
@@ -72,7 +97,7 @@ export default function Home() {
   const negotiationDiscount = score >= 82 ? .02 : score >= 65 ? .05 : score >= 45 ? .09 : .14;
   const negotiationPrice = Math.max(0,Math.round((negotiationBase*(1-negotiationDiscount))/1000)*1000);
   const formatPrice = (value:number) => new Intl.NumberFormat("he-IL").format(value);
-  const choose=(id:string,value:string)=>{ setAnswers(a=>({...a,[id]:value})); setTimeout(()=>{ if(step<questions.length-1) { if(questions[step+1].section!==questions[step].section) track("section_completed",{section:questions[step].section}); setStep(s=>s+1); } else { track("check_completed"); setDone(true); } },180); };
+  const choose=(id:string,value:string)=>{ setAnswers(a=>({...a,[id]:value})); setTimeout(()=>{ if(step<questions.length-1) { if(questions[step+1].section!==questions[step].section) recordEvent("section_completed",{section:questions[step].section}); setStep(s=>s+1); } else { recordEvent("check_completed"); setDone(true); } },180); };
   const handleReport = async () => {
     const reportText = [
       "דוח בדיקה ראשוני – המומחה של דוד",
@@ -91,14 +116,14 @@ export default function Home() {
           title: "דוח בדיקת רכב – המומחה של דוד",
           text: reportText,
         });
-        track("report_shared");
+        recordEvent("report_shared");
         return;
       } catch (error) {
         if (error instanceof DOMException && error.name === "AbortError") return;
       }
     }
 
-    track("report_printed");
+    recordEvent("report_printed");
     window.print();
   };
 
@@ -114,16 +139,16 @@ export default function Home() {
       </div>
       <div className="heroBottom">
         <span className="eyebrow">לפני שמעבירים מקדמה</span>
-        <div className="heroActions"><button className="primary" onClick={()=>{track("check_started");setStarted(true)}}>מתחילים בדיקה <span>←</span></button><span className="time">כחמש דקות ⏱</span></div>
+        <div className="heroActions"><button className="primary" onClick={()=>{recordEvent("check_started");setStarted(true)}}>מתחילים בדיקה <span>←</span></button><span className="time">כחמש דקות ⏱</span></div>
       </div>
     </section>
     <section className="trust"><div><b>01</b><span>מכניסים פרטים</span></div><i>←</i><div><b>02</b><span>בודקים כמו מקצוענים</span></div><i>←</i><div><b>03</b><span>מקבלים פסק דין</span></div></section>
     <footer><b>חשוב לדעת:</b> הכלי מסייע בסינון ובהכנה ואינו מחליף בדיקה במכון מורשה, בדיקת מסמכים או ייעוץ מקצועי.</footer>
   </main>;
 
-  if(!detailsSubmitted) return <main className="app" dir="rtl"><div className="appTop"><button className="logoBtn" aria-label="חזרה למסך הפתיחה" onClick={()=>setStarted(false)}>🚘</button><div className="progress"><span>פרטי הרכב</span><div><i style={{width:"8%"}}/></div></div></div><section className="formCard"><span className="stepNum">שלב ראשון</span><h2>איזה רכב מצאתם?</h2><p>נתחיל בפרטים היבשים. אחר כך נצלול למה שבאמת חשוב.</p><div className="fields"><label>יצרן<input value={car.make} onChange={e=>setCar({...car,make:e.target.value})} placeholder="לדוגמה: טויוטה"/></label><label>דגם<input value={car.model} onChange={e=>setCar({...car,model:e.target.value})} placeholder="לדוגמה: קורולה"/></label><label>שנת ייצור<input inputMode="numeric" value={car.year} onChange={e=>setCar({...car,year:e.target.value})} placeholder="2020"/></label><label>קילומטראז׳<input inputMode="numeric" value={car.km} onChange={e=>setCar({...car,km:e.target.value})} placeholder="85,000"/></label><label>מחיר מבוקש ₪<input inputMode="numeric" value={car.price} onChange={e=>setCar({...car,price:e.target.value})} placeholder="72,000"/></label><div className="listPriceRow"><label>מחירון עדכני ₪<input inputMode="numeric" value={car.listPrice==="unknown"?"":car.listPrice} onChange={e=>setCar({...car,listPrice:e.target.value})} placeholder={car.listPrice==="unknown"?"לא נבדק":"לדוגמה: 68,000"}/></label><button type="button" className={car.listPrice==="unknown"?"unknownPrice active":"unknownPrice"} onClick={()=>setCar({...car,listPrice:car.listPrice==="unknown"?"":"unknown"})}>{car.listPrice==="unknown"?"✓ לא בדקתי":"לא בדקתי"}</button></div></div><button className="primary full" disabled={!Object.values(car).every(Boolean)} onClick={()=>{track("vehicle_details_completed",{list_price_checked:car.listPrice==="unknown"?"no":"yes"});setDetailsSubmitted(true);setStep(0)}}>ממשיכים לבדיקה ←</button></section></main>;
+  if(!detailsSubmitted) return <main className="app" dir="rtl"><div className="appTop"><button className="logoBtn" aria-label="חזרה למסך הפתיחה" onClick={()=>setStarted(false)}>🚘</button><div className="progress"><span>פרטי הרכב</span><div><i style={{width:"8%"}}/></div></div></div><section className="formCard"><span className="stepNum">שלב ראשון</span><h2>איזה רכב מצאתם?</h2><p>נתחיל בפרטים היבשים. אחר כך נצלול למה שבאמת חשוב.</p><div className="fields"><label>יצרן<input value={car.make} onChange={e=>setCar({...car,make:e.target.value})} placeholder="לדוגמה: טויוטה"/></label><label>דגם<input value={car.model} onChange={e=>setCar({...car,model:e.target.value})} placeholder="לדוגמה: קורולה"/></label><label>שנת ייצור<input inputMode="numeric" value={car.year} onChange={e=>setCar({...car,year:e.target.value})} placeholder="2020"/></label><label>קילומטראז׳<input inputMode="numeric" value={car.km} onChange={e=>setCar({...car,km:e.target.value})} placeholder="85,000"/></label><label>מחיר מבוקש ₪<input inputMode="numeric" value={car.price} onChange={e=>setCar({...car,price:e.target.value})} placeholder="72,000"/></label><div className="listPriceRow"><label>מחירון עדכני ₪<input inputMode="numeric" value={car.listPrice==="unknown"?"":car.listPrice} onChange={e=>setCar({...car,listPrice:e.target.value})} placeholder={car.listPrice==="unknown"?"לא נבדק":"לדוגמה: 68,000"}/></label><button type="button" className={car.listPrice==="unknown"?"unknownPrice active":"unknownPrice"} onClick={()=>setCar({...car,listPrice:car.listPrice==="unknown"?"":"unknown"})}>{car.listPrice==="unknown"?"✓ לא בדקתי":"לא בדקתי"}</button></div></div><button className="primary full" disabled={!Object.values(car).every(Boolean)} onClick={()=>{recordEvent("vehicle_details_completed",{list_price_checked:car.listPrice==="unknown"?"no":"yes"});setDetailsSubmitted(true);setStep(0)}}>ממשיכים לבדיקה ←</button></section></main>;
 
-  if(done) return <main className="resultPage" dir="rtl"><header className="resultHead"><div className="brand"><span className="brandmark" role="img" aria-label="רכב">🚘</span><div><b>המומחה של דוד</b><small>דוח בדיקה ראשוני</small></div></div><button onClick={handleReport}>שיתוף / שמירת הדוח</button></header><section className="resultHero"><span className={`risk ${result.color}`}>{result.label}</span><h1 className={`verdictStamp ${result.color}`}>{result.verdict}</h1><p>{car.make} {car.model} · {car.year} · {car.km} ק״מ</p><div className={`scoreRing ${result.color}`}><strong>{score}</strong><span>מתוך 100</span></div><p className="resultText">{result.text}</p></section><section className="reportGrid"><article><h3>🚩 דגלים שדורשים תשובה</h3>{flags.length ? <ul>{flags.map((f,i)=><li key={i}>{f}</li>)}</ul> : <p className="empty">לא סומנו דגלים אדומים משמעותיים.</p>}</article><article><h3>💬 מה לשאול את המוכר עכשיו</h3><ul><li>אפשר לקבל תיעוד טיפולים וחשבוניות?</li><li>האם הרכב עבר תאונה או תיקון משמעותי?</li><li>האם קיימים שעבודים, עיקולים או התחייבויות?</li><li>האם תסכים לבדיקה במכון שאני בוחר/ת?</li></ul></article><article><h3>🔧 מה לבקש מהמכון לבדוק</h3><ul><li>שלדה, קצות שלדה וסימני תיקון</li><li>מנוע, מערכת קירור, נזילות ולחצי מנוע</li><li>גיר, מתלים, בלמים, היגוי וצמיגים</li><li>סריקת מחשב והיסטוריית תקלות</li></ul></article><article className="price negotiation"><h3>משא ומתן</h3><dl><div><dt>מחיר מבוקש</dt><dd>₪{car.price}</dd></div><div><dt>מחירון עדכני</dt><dd>{hasListPrice ? `₪${car.listPrice}` : "לא נבדק"}</dd></div><div className="targetPrice"><dt>אפשר לשאוף להגיע ל</dt><dd>₪{formatPrice(negotiationPrice)}</dd></div></dl><p>מחיר היעד מחושב לפי המחיר המבוקש, המחירון והליקויים שסומנו. הוא מושפע גם ממצב השוק ומהבדיקה המקצועית.</p><small>זהו כלי עזר למשא ומתן ולא הערכת שמאי.</small></article></section><div className="bottomActions"><a className="primary" href="tel:0527922238" onClick={()=>track("phone_consultation_clicked")} aria-label="חיוג לדוד להתייעצות טלפונית" style={{textDecoration:"none",textAlign:"center",minWidth:180}}>📞 להתייעצות עם דוד</a><button className="primary" onClick={()=>{setDone(false);setStep(0)}}>חזרה לתשובות</button><button className="secondary" onClick={()=>{track("another_vehicle_started");setCar({make:"",model:"",year:"",km:"",price:"",listPrice:""});setAnswers({});setDone(false);setStep(0);setDetailsSubmitted(false)}}>בדיקת רכב נוסף</button></div><footer><b>לתשומת לב:</b> זהו דוח סינון ראשוני המבוסס על המידע שמסרתם. הוא אינו מהווה אחריות למצב הרכב ואינו מחליף בדיקה מקצועית ומסמכית.</footer></main>;
+  if(done) return <main className="resultPage" dir="rtl"><header className="resultHead"><div className="brand"><span className="brandmark" role="img" aria-label="רכב">🚘</span><div><b>המומחה של דוד</b><small>דוח בדיקה ראשוני</small></div></div><button onClick={handleReport}>שיתוף / שמירת הדוח</button></header><section className="resultHero"><span className={`risk ${result.color}`}>{result.label}</span><h1 className={`verdictStamp ${result.color}`}>{result.verdict}</h1><p>{car.make} {car.model} · {car.year} · {car.km} ק״מ</p><div className={`scoreRing ${result.color}`}><strong>{score}</strong><span>מתוך 100</span></div><p className="resultText">{result.text}</p></section><section className="reportGrid"><article><h3>🚩 דגלים שדורשים תשובה</h3>{flags.length ? <ul>{flags.map((f,i)=><li key={i}>{f}</li>)}</ul> : <p className="empty">לא סומנו דגלים אדומים משמעותיים.</p>}</article><article><h3>💬 מה לשאול את המוכר עכשיו</h3><ul><li>אפשר לקבל תיעוד טיפולים וחשבוניות?</li><li>האם הרכב עבר תאונה או תיקון משמעותי?</li><li>האם קיימים שעבודים, עיקולים או התחייבויות?</li><li>האם תסכים לבדיקה במכון שאני בוחר/ת?</li></ul></article><article><h3>🔧 מה לבקש מהמכון לבדוק</h3><ul><li>שלדה, קצות שלדה וסימני תיקון</li><li>מנוע, מערכת קירור, נזילות ולחצי מנוע</li><li>גיר, מתלים, בלמים, היגוי וצמיגים</li><li>סריקת מחשב והיסטוריית תקלות</li></ul></article><article className="price negotiation"><h3>משא ומתן</h3><dl><div><dt>מחיר מבוקש</dt><dd>₪{car.price}</dd></div><div><dt>מחירון עדכני</dt><dd>{hasListPrice ? `₪${car.listPrice}` : "לא נבדק"}</dd></div><div className="targetPrice"><dt>אפשר לשאוף להגיע ל</dt><dd>₪{formatPrice(negotiationPrice)}</dd></div></dl><p>מחיר היעד מחושב לפי המחיר המבוקש, המחירון והליקויים שסומנו. הוא מושפע גם ממצב השוק ומהבדיקה המקצועית.</p><small>זהו כלי עזר למשא ומתן ולא הערכת שמאי.</small></article></section><div className="bottomActions"><a className="primary" href="tel:0527922238" onClick={()=>recordEvent("phone_consultation_clicked")} aria-label="חיוג לדוד להתייעצות טלפונית" style={{textDecoration:"none",textAlign:"center",minWidth:180}}>📞 להתייעצות עם דוד</a><button className="primary" onClick={()=>{setDone(false);setStep(0)}}>חזרה לתשובות</button><button className="secondary" onClick={()=>{recordEvent("another_vehicle_started");setCar({make:"",model:"",year:"",km:"",price:"",listPrice:""});setAnswers({});setDone(false);setStep(0);setDetailsSubmitted(false)}}>בדיקת רכב נוסף</button></div><footer><b>לתשומת לב:</b> זהו דוח סינון ראשוני המבוסס על המידע שמסרתם. הוא אינו מהווה אחריות למצב הרכב ואינו מחליף בדיקה מקצועית ומסמכית.</footer></main>;
 
   const q=questions[step];
   return <main className="app" dir="rtl"><div className="appTop"><button className="logoBtn" aria-label="פתיחת אפשרויות יציאה" onClick={()=>setShowExit(true)}>🚘</button><div className="progress"><span>שאלה {step+1} מתוך {questions.length}</span><div><i style={{width:`${(step+1)/questions.length*100}%`}}/></div></div><span className="carPill">{car.make} {car.model} · {car.year}</span></div><section className="questionCard"><span className="stepNum">{q.section} · {String(step+1).padStart(2,"0")}</span><h2>{q.title}</h2><p>{q.hint}</p><div className="options">{q.options.map(o=><button key={o[0]} className={answers[q.id]===o[0]?"selected":""} onClick={()=>choose(q.id,o[0])}><b className="optionText">{o[1]}</b><span className="choiceMark" aria-hidden="true"/><i aria-hidden="true">←</i></button>)}</div>{q.id==="service"&&<p className="expertFootnote">לא ראית חשבונית? מבחינתנו זה לא קרה.</p>}<div className="inspectionProgress" aria-label="התקדמות הבדיקה מימין לשמאל">
