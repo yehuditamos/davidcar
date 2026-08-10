@@ -68,9 +68,9 @@ export default function Home() {
     <header className="topbar"><div className="brand"><span className="brandmark" role="img" aria-label="רכב">🚘</span><div><b>המומחה של דוד</b><small>לא קונים חתול בשק</small></div></div><span className="tag">בדיקה חכמה לרכב יד שנייה</span></header>
     <section className="hero">
       <div className="heroCopy">
-        <span className="eyebrow">לפני שמעבירים מקדמה</span>
-        <h1><span>הרכב נראה מציאה.</span><em>בואו נבדוק מה הוא מסתיר.</em></h1>
+        <h1><span>הרכב נראה מציאה</span><em>בואו נבדוק מה הוא מסתיר.</em></h1>
         <p><span>בדיקה חכמה וקפדנית לפני קניית רכב יד שנייה.</span><span>בתוך כחמש דקות תקבלו ציון, דגלים אדומים ופסק דין ברור.</span></p>
+        <span className="eyebrow">לפני שמעבירים מקדמה</span>
         <div className="heroActions"><button className="primary" onClick={()=>setStarted(true)}>מתחילים בדיקה <span>←</span></button><span className="time">כחמש דקות ⏱</span></div>
       </div>
       <div className="inspectionVisual" aria-label="תרשים אזורי בדיקה ברכב">
