@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Rubik } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 
 const rubik = Rubik({
@@ -14,5 +15,5 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({children}:{children:React.ReactNode}) {
-  return <html lang="he" dir="rtl"><body className={rubik.variable}>{children}</body></html>;
+  return <html lang="he" dir="rtl"><body className={rubik.variable}>{children}<Analytics /></body></html>;
 }
