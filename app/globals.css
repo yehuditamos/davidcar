@@ -81,3 +81,145 @@ body{font-family:var(--font-rubik),Arial,sans-serif}
 }
 
 .eyebrow{display:block;text-align:center;width:100%}
+
+
+/* David inspection notebook — approved visual system */
+:root{--paper:#f3ecdd;--paper-deep:#e8ddc8;--ink:#20231f;--orange:#e85b18;--green:#234f3b;--line:#aaa38f}
+body{
+  background-color:var(--paper);
+  background-image:radial-gradient(rgba(32,35,31,.055) .7px,transparent .8px);
+  background-size:5px 5px;
+  color:var(--ink)
+}
+.landing,.app,.resultPage{background:transparent}
+.topbar,.resultHead,.appTop{border-bottom:1px solid rgba(32,35,31,.45)}
+.brandmark,.logoBtn{border-radius:3px;background:var(--orange);box-shadow:none;border:1px solid #ba4513}
+.tag,.carPill{background:transparent;border-color:rgba(32,35,31,.45);border-radius:2px}
+.hero{
+  min-height:650px;
+  background:transparent;
+  grid-template-columns:1fr 1fr;
+  gap:5vw;
+  padding-top:52px;
+  padding-bottom:52px
+}
+.eyebrow,.stepNum{
+  color:var(--green);
+  letter-spacing:.035em;
+  border:1px solid rgba(32,35,31,.58);
+  padding:8px 14px;
+  width:max-content;
+  margin-inline:auto;
+  background:rgba(255,255,255,.18)
+}
+.hero h1{
+  font-size:clamp(48px,5.6vw,78px);
+  line-height:1.05;
+  letter-spacing:-.055em;
+  font-weight:800
+}
+.hero h1 em{color:var(--green)}
+.heroCopy>p{color:#4e5048;text-align:center;margin-inline:auto}
+.heroActions{justify-content:center}
+.primary{background:var(--orange);border-radius:3px;box-shadow:none;border:1px solid #bd4511}
+.primary:hover{transform:none;box-shadow:none;background:#d94f12}
+.secondary{border-radius:3px;background:rgba(255,255,255,.28);border:1px solid rgba(32,35,31,.45)}
+.inspectionVisual{
+  min-height:465px;
+  position:relative;
+  border:1px solid rgba(32,35,31,.58);
+  background:rgba(255,255,255,.13);
+  padding:24px 25px 30px;
+  box-shadow:7px 7px 0 rgba(35,79,59,.13)
+}
+.drawingTitle{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(32,35,31,.5);padding-bottom:12px;text-transform:uppercase}
+.drawingTitle span{font-size:14px;font-weight:750}.drawingTitle b{font-size:21px;color:var(--orange)}
+.carDrawing{width:100%;height:auto;margin-top:25px;overflow:visible}
+.carLine,.carWheel,.carWheelInner{fill:none;stroke:var(--ink);stroke-width:3;vector-effect:non-scaling-stroke}
+.carWheelInner{stroke-width:2}.callout{fill:none;stroke:var(--orange);stroke-width:2}.calloutDot{fill:var(--orange)}
+.diagramLabel{fill:var(--ink);font-family:var(--font-rubik),Arial,sans-serif;font-size:23px;font-weight:700;text-anchor:middle}
+.inspectionSeal{
+  position:absolute;left:26px;bottom:23px;width:112px;height:112px;border:3px double var(--green);
+  border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  color:var(--green);transform:rotate(-8deg);font-size:12px;text-align:center
+}
+.inspectionSeal b{font-size:18px}
+.trust{background:var(--green);border-top:4px solid var(--orange)}
+.formCard,.questionCard{
+  background:rgba(255,255,255,.2);
+  border:1px solid rgba(32,35,31,.55);
+  border-radius:2px;
+  box-shadow:7px 7px 0 rgba(35,79,59,.13);
+  position:relative
+}
+.formCard:before,.questionCard:before{
+  content:"טופס בדיקה";
+  position:absolute;left:28px;top:25px;color:var(--orange);font-size:11px;font-weight:800;letter-spacing:.08em
+}
+.formCard h2,.questionCard h2{font-weight:800;letter-spacing:-.035em;text-align:center}
+.formCard>p,.questionCard>p{text-align:center;color:#4e5048}
+.fields{border-top:1px solid rgba(32,35,31,.34);padding-top:24px}
+.fields label{display:grid;grid-template-columns:130px 1fr;align-items:center;border-bottom:1px solid rgba(32,35,31,.28);padding:0;font-size:14px}
+.fields input{
+  margin:0;border:0;border-right:1px solid rgba(32,35,31,.35);border-radius:0;background:rgba(255,255,255,.18);
+  min-height:58px;padding:15px 17px;font-size:16px
+}
+.fields input:focus{border:0;border-right:4px solid var(--orange);background:rgba(232,91,24,.07)}
+.wide{grid-column:1/-1}
+.options button{
+  background:rgba(255,255,255,.12);
+  border:1px solid rgba(32,35,31,.46);
+  border-radius:2px;
+  min-height:66px
+}
+.options button span{border-radius:50%;background:transparent}
+.options button.selected{
+  border:1.5px solid var(--orange);
+  background:linear-gradient(90deg,rgba(232,91,24,.04),rgba(232,91,24,.18),rgba(232,91,24,.07))
+}
+.options button.selected span{border-color:var(--orange);background:var(--orange);color:white}
+.options button.selected i{color:var(--orange)}
+.inspectionProgress{margin-top:34px;padding-top:18px;border-top:1px solid rgba(32,35,31,.24)}
+.stageTrack{height:3px;background:rgba(32,35,31,.23);position:relative;margin:0 7px 11px}
+.stageTrack:after{content:"←";position:absolute;left:-3px;top:-14px;color:var(--orange);font-size:20px}
+.stageTrack i{position:absolute;right:0;top:0;height:3px;background:var(--orange);transition:width .35s ease}
+.stageTrack i:after{content:"";position:absolute;left:-5px;top:-4px;width:11px;height:11px;border-radius:50%;background:var(--orange)}
+.stageLabels{display:flex;direction:rtl;justify-content:space-between;color:#55594f;font-size:12px}
+.nav{padding-top:18px;border-top:0;margin-top:12px}
+.resultHead button{border-radius:2px;background:transparent;border:1px solid rgba(32,35,31,.45)}
+.resultHero{background:transparent;border-bottom:1px solid rgba(32,35,31,.35)}
+.risk{border-radius:2px;border:1px solid currentColor;background:transparent!important}
+.scoreRing{border-radius:0;background:transparent;border-width:0;border-left:1px solid rgba(32,35,31,.55);width:170px;height:130px}
+.scoreRing strong{font-size:70px;color:var(--green)}
+.reportGrid{gap:14px}
+.reportGrid article{
+  background:rgba(255,255,255,.16);
+  border:1px solid rgba(32,35,31,.48);
+  border-radius:2px;
+  box-shadow:4px 4px 0 rgba(35,79,59,.1)
+}
+.reportGrid article h3{border-bottom:1px solid rgba(32,35,31,.28);padding-bottom:13px}
+.reportGrid .price{background:var(--green);border-color:var(--green)}
+.bottomActions a,.bottomActions button{border-radius:2px;display:inline-flex;align-items:center;justify-content:center}
+.resultPage footer,.landing footer{border-top:1px solid rgba(32,35,31,.25)}
+
+@media(max-width:760px){
+  .hero{padding-top:35px;background:transparent}
+  .inspectionVisual{margin-top:32px;min-height:340px;padding:18px 16px 22px;box-shadow:5px 5px 0 rgba(35,79,59,.13)}
+  .carDrawing{margin-top:10px}
+  .inspectionSeal{width:82px;height:82px;left:18px;bottom:15px;font-size:9px}
+  .inspectionSeal b{font-size:14px}
+  .diagramLabel{font-size:21px}
+  .formCard,.questionCard{box-shadow:5px 5px 0 rgba(35,79,59,.13)}
+  .formCard:before,.questionCard:before{left:18px;top:16px;font-size:9px}
+  .fields{display:block}
+  .fields label{grid-template-columns:105px 1fr}
+  .fields input{min-width:0}
+  .resultHead{height:auto;min-height:82px;padding-top:10px;padding-bottom:10px}
+  .resultHead button{font-size:12px;padding:9px}
+  .bottomActions a,.bottomActions button{width:100%;min-height:54px}
+}
+@media print{
+  body{background:white;background-image:none}
+  .inspectionProgress{display:none}
+}
