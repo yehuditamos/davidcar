@@ -59,7 +59,7 @@ export async function POST(request: Request) {
       options=${options}::jsonb, updated_at=now() WHERE id=${String(body.id)}
     `;
   } else {
-    const next = await sql`SELECT COALESCE(MAX(sort_order), 0) + 1 AS value FROM questions`;
+    const next = await sql`SELECT COALESCE(MAX(sort_order), 0) + 1 AS value FROM questions` as { value: number }[];
     const id = `custom_${Date.now()}_${Math.random().toString(36).slice(2,8)}`;
     await sql`
       INSERT INTO questions (id,section,title,hint,options,sort_order)
