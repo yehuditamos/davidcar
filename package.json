@@ -19,7 +19,8 @@
     "drizzle-orm": "0.45.2",
     "next": "16.2.6",
     "react": "19.2.6",
-    "react-dom": "19.2.6"
+    "react-dom": "19.2.6",
+    "@vercel/analytics": "2.0.1"
   },
   "devDependencies": {
     "@cloudflare/vite-plugin": "1.37.1",
@@ -40,5 +41,5 @@
     "wrangler": "4.92.0"
   },
   "type": "module",
-  "displayName": "\u05d4\u05de\u05d5\u05de\u05d7\u05d4 \u05e9\u05dc \u05d3\u05d5\u05d3 \u2013 \u05d1\u05d3\u05d9\u05e7\u05ea \u05e8\u05db\u05d1 \u05dc\u05e4\u05e0\u05d9 \u05e7\u05e0\u05d9\u05d9\u05d4"
+  "displayName": "המומחה של דוד – בדיקת רכב לפני קנייה"
 }
