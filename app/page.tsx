@@ -8,10 +8,10 @@ const questions = [
   { id: "seller", title: "מי מוכר את הרכב?", hint: "הסיפור שמאחורי הרכב חשוב כמעט כמו הרכב עצמו", options: [["private","אדם פרטי, הרכב רשום על שמו",0],["family","אדם פרטי, אבל הרכב רשום על בן משפחה",12],["dealer","סוחר או מגרש רכבים",16],["unclear","לא ברור לי מי המוכר",25]] },
   { id: "ownership", title: "כמה בעלים היו לרכב?", hint: "בדקו ברישיון את מספר הבעלים הקודמים ואת סוג הבעלות", options: [["first","יד ראשונה פרטית",0],["second","יד שנייה פרטית",3],["many","שלוש ידיים ומעלה",10],["lease","ליסינג, השכרה או חברה",14]] },
   { id: "mileage", title: "הקילומטראז׳ הגיוני?", hint: "הממוצע בישראל הוא בערך 15–20 אלף ק״מ בשנה", options: [["normal","כן, תואם לגיל הרכב",0],["high","גבוה מהממוצע",8],["low","נמוך באופן חריג ואין הוכחות",14],["unknown","לא יודע/ת או שיש סתירות",22]] },
-  { id: "service", title: "יש היסטוריית טיפולים מתועדת?", hint: "בקשו חשבוניות או תיעוד ממוסך — לא להסתפק ב׳טופל בזמן׳", options: [["full","כן, תיעוד מלא ורציף",0],["partial","יש תיעוד חלקי",7],["verbal","רק הבטחה בעל פה",16],["none","אין שום תיעוד",24]] },
-  { id: "accident", title: "מה ידוע על תאונות ותיקוני פח?", hint: "תיקון קוסמטי הוא לא שלדה — אבל הסתרה היא תמיד דגל אדום", options: [["none","ללא תאונות, ויש תיעוד",0],["cosmetic","תיקוני צבע או פח קלים",5],["accident","הייתה תאונה, לא ברור מה היקפה",18],["chassis","פגיעת שלדה או קצה שלדה",40]] },
+  { id: "service", title: "יש היסטוריית טיפולים מתועדת?", hint: "בקשו חשבוניות או תיעוד ממוסך, לא להסתפק ב׳טופל בזמן׳", options: [["full","כן, תיעוד מלא ורציף",0],["partial","יש תיעוד חלקי",7],["verbal","רק הבטחה בעל פה",16],["none","אין שום תיעוד",24]] },
+  { id: "accident", title: "מה ידוע על תאונות ותיקוני פח?", hint: "תיקון קוסמטי הוא לא שלדה, אבל הסתרה היא תמיד דגל אדום", options: [["none","ללא תאונות, ויש תיעוד",0],["cosmetic","תיקוני צבע או פח קלים",5],["accident","הייתה תאונה, לא ברור מה היקפה",18],["chassis","פגיעת שלדה או קצה שלדה",40]] },
   { id: "engine", title: "איך המנוע מתנהג בהתנעה קרה?", hint: "בקשו מהמוכר לא לחמם את הרכב לפני שאתם מגיעים", options: [["smooth","מניע מיד, יציב ושקט",0],["noise","רעש, רעידות או עשן לרגע",12],["warning","נורת מנוע או עשן מתמשך",30],["warm","הרכב כבר היה חם כשהגעתי",15]] },
-  { id: "fluids", title: "ראיתם נזילות או סימני התחממות?", hint: "הסתכלו מתחת לרכב ובמיכלי הנוזלים — רק כשהמנוע קר", options: [["clean","יבש ונקי, אין ריח חריג",0],["sweat","הזעה קלה באזור המנוע",6],["leak","טיפות, כתמים או חוסר בנוזלים",22],["heat","סימני התחממות או ערבוב שמן ומים",40]] },
+  { id: "fluids", title: "ראיתם נזילות או סימני התחממות?", hint: "הסתכלו מתחת לרכב ובמיכלי הנוזלים. רק כשהמנוע קר", options: [["clean","יבש ונקי, אין ריח חריג",0],["sweat","הזעה קלה באזור המנוע",6],["leak","טיפות, כתמים או חוסר בנוזלים",22],["heat","סימני התחממות או ערבוב שמן ומים",40]] },
   { id: "drive", title: "איך הרכב מרגיש בנסיעת מבחן?", hint: "בדקו האצה, בלימה, פניות, כביש משובש ונסיעה איטית", options: [["good","נוסע ישר, חלק ושקט",0],["minor","רעש קטן או משיכה קלה",8],["gear","מכות בגיר, רעידות או קושי בהעברה",28],["unsafe","בלימה חלשה, הגה לא יציב או רעש חזק",36]] },
   { id: "dashboard", title: "מה מצב נורות האזהרה והמערכות?", hint: "בסוויץ׳ הנורות צריכות להידלק, ובהנעה להיכבות", options: [["clear","הכול תקין וכל המערכות עובדות",0],["minor","תקלה קטנה במזגן או בחשמל",6],["warning","נורת אזהרה נשארת דולקת",22],["tamper","נורה לא נדלקת בכלל או נראה שטופלה",30]] },
   { id: "documents", title: "המסמכים והסיפור מסתדרים?", hint: "שם המוכר, רישיון, מספר שלדה, טסט ושעבודים חייבים להתאים", options: [["match","הכול תואם ונבדק",0],["pending","עוד לא בדקתי שעבודים ועיקולים",12],["mismatch","יש פרט שלא תואם",28],["pressure","המוכר לוחץ לסגור לפני בדיקה",32]] },
@@ -20,8 +20,8 @@ const questions = [
 function riskCopy(score:number) {
   if (score <= 18) return { verdict:"שווה להתקדם לבדיקה", label:"סיכון נמוך", color:"good", text:"לא עלו כרגע סימנים חריגים, אבל לפני קנייה ממשיכים לבדיקה מקצועית מלאה." };
   if (score <= 42) return { verdict:"מתקדמים בזהירות", label:"סיכון בינוני", color:"warn", text:"יש כמה נקודות שדורשות אימות ותמחור. לא סוגרים לפני בדיקה וקבלת תשובות ברורות." };
-  if (score <= 66) return { verdict:"רק עם מומחה ותנאים חזקים", label:"סיכון גבוה", color:"danger", text:"הצטברו דגלים אדומים משמעותיים. אם ממשיכים — רק במחיר שמגלם את הסיכון ולאחר בדיקה קפדנית." };
-  return { verdict:"דוד אומר: לוותר", label:"סיכון חריג", color:"danger", text:"יותר מדי סימני אזהרה. יש מספיק רכבים בשוק — לא צריך להתאהב דווקא בחתול שבשק." };
+  if (score <= 66) return { verdict:"רק עם מומחה ותנאים חזקים", label:"סיכון גבוה", color:"danger", text:"הצטברו דגלים אדומים משמעותיים. אם ממשיכים, רק במחיר שמגלם את הסיכון ולאחר בדיקה קפדנית." };
+  return { verdict:"דוד אומר: לוותר", label:"סיכון חריג", color:"danger", text:"יותר מדי סימני אזהרה. יש מספיק רכבים בשוק. לא צריך להתאהב דווקא בחתול שבשק." };
 }
 
 export default function Home() {
@@ -74,18 +74,23 @@ export default function Home() {
         <div className="heroActions"><button className="primary" onClick={()=>setStarted(true)}>מתחילים בדיקה <span>←</span></button><span className="time">כחמש דקות ⏱</span></div>
       </div>
       <div className="inspectionVisual" aria-label="תרשים אזורי בדיקה ברכב">
-        <svg className="carDrawing" viewBox="0 0 720 330" role="img" aria-label="שרטוט צד של רכב עם מנוע, שלדה ובלמים">
-          <path className="carLine" d="M82 230 L104 174 Q112 154 143 148 L230 135 Q264 86 330 76 L438 77 Q486 84 543 139 L619 154 Q647 160 658 190 L665 230 Z"/>
-          <path className="carLine" d="M235 135 L285 91 L361 87 L361 139 Z M374 87 L433 89 Q472 97 521 139 L374 139 Z"/>
-          <path className="carLine" d="M108 174 L630 174 M187 230 L563 230 M361 88 L361 220"/>
-          <circle className="carWheel" cx="177" cy="230" r="49"/><circle className="carWheelInner" cx="177" cy="230" r="24"/>
-          <circle className="carWheel" cx="574" cy="230" r="49"/><circle className="carWheelInner" cx="574" cy="230" r="24"/>
-          <path className="callout" d="M572 150 L620 77"/><circle className="calloutDot" cx="572" cy="150" r="6"/>
-          <path className="callout" d="M361 230 L361 298"/><circle className="calloutDot" cx="361" cy="230" r="6"/>
-          <path className="callout" d="M177 230 L111 298"/><circle className="calloutDot" cx="177" cy="230" r="6"/>
-          <text className="diagramLabel" x="620" y="61">מנוע</text>
-          <text className="diagramLabel" x="361" y="322">שלדה</text>
-          <text className="diagramLabel" x="93" y="322">בלמים</text>
+        <svg className="carDrawing" viewBox="0 0 760 350" role="img" aria-label="שרטוט צד של רכב עם מנוע, שלדה ובלמים">
+          <path className="carLine carBody" d="M72 244 C76 222 83 198 101 184 C118 171 157 164 220 158 C252 116 294 86 347 78 C398 70 460 75 498 92 C533 108 561 133 590 161 L649 172 C677 178 695 195 703 219 L708 244 L651 246 C646 208 619 183 583 183 C547 183 518 208 512 246 L242 246 C237 208 209 183 173 183 C137 183 108 208 103 246 Z"/>
+          <path className="carLine windowLine" d="M238 157 C267 120 303 96 349 90 L379 88 L379 157 Z"/>
+          <path className="carLine windowLine" d="M395 88 C438 89 472 94 495 105 C521 118 545 138 568 159 L395 157 Z"/>
+          <path className="carLine detailLine" d="M379 89 L379 230 M395 89 L395 230 M221 158 L604 161 M249 244 L509 244"/>
+          <path className="carLine detailLine" d="M415 174 L455 174 M286 174 L326 174"/>
+          <path className="carLine detailLine" d="M86 207 L118 207 M654 188 L687 199"/>
+          <circle className="carWheel" cx="173" cy="245" r="52"/><circle className="carWheelInner" cx="173" cy="245" r="27"/>
+          <path className="carLine wheelSpoke" d="M173 218 L173 272 M146 245 L200 245 M154 226 L192 264 M192 226 L154 264"/>
+          <circle className="carWheel" cx="583" cy="245" r="52"/><circle className="carWheelInner" cx="583" cy="245" r="27"/>
+          <path className="carLine wheelSpoke" d="M583 218 L583 272 M556 245 L610 245 M564 226 L602 264 M602 226 L564 264"/>
+          <path className="callout" d="M590 161 L647 72"/><circle className="calloutDot" cx="590" cy="161" r="5"/>
+          <path className="callout" d="M380 244 L380 313"/><circle className="calloutDot" cx="380" cy="244" r="5"/>
+          <path className="callout" d="M173 245 L108 313"/><circle className="calloutDot" cx="173" cy="245" r="5"/>
+          <text className="diagramLabel" x="647" y="55">מנוע</text>
+          <text className="diagramLabel" x="380" y="340">שלדה</text>
+          <text className="diagramLabel" x="91" y="340">בלמים</text>
         </svg>
       </div>
     </section>
