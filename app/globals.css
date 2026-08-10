@@ -146,7 +146,12 @@ button{color:inherit}
 .reportGrid article{border:1px solid rgba(32,34,31,.55);border-radius:3px;padding:22px;background:rgba(255,255,255,.1)}
 .reportGrid h3{margin:0 0 14px;padding-bottom:12px;border-bottom:1px solid rgba(32,34,31,.3)}
 .reportGrid ul{padding-right:20px;line-height:1.9;color:#4e524b}
-.reportGrid .price{background:var(--green);color:white}.price strong{font-size:36px}.price p{line-height:1.65;opacity:.78}
+.reportGrid .price{background:var(--green);color:white}.price strong{font-size:36px}.price p{line-height:1.65;opacity:.82}
+.negotiation dl{margin:0}.negotiation dl>div{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:11px 0;border-bottom:1px solid rgba(255,255,255,.25)}
+.negotiation dt{font-size:13px;opacity:.8}.negotiation dd{margin:0;font-size:20px;font-weight:800}
+.negotiation .targetPrice{margin-top:8px;padding:16px 0;border-top:2px solid var(--orange);border-bottom:2px solid var(--orange)}
+.negotiation .targetPrice dt{font-size:15px;opacity:1;font-weight:800}.negotiation .targetPrice dd{font-size:30px;color:#ffb28e}
+.negotiation small{display:block;margin-top:12px;opacity:.65;font-size:10px;line-height:1.5}
 .empty{color:#28744d}
 .bottomActions{display:flex;justify-content:center;gap:12px;margin:28px}.bottomActions>*{min-width:180px}
 
