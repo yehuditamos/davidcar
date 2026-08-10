@@ -61,3 +61,21 @@
   .time{text-align:center;font-size:14px}
   .gaugeCard{margin-top:34px;min-height:390px;padding:28px;border-radius:30px;box-shadow:10px 10px 0 #cdd8cf}
 }
+
+
+/* Centered headline and clear, non-interactive inspection summary */
+body{font-family:var(--font-rubik),Arial,sans-serif}
+.hero h1{text-align:center;font-weight:650;letter-spacing:-.045em}
+.checks{width:100%;margin-top:26px;text-align:center}
+.checks p{margin:0 0 13px;font-size:13px;font-weight:700;color:#b9d2c8}
+.checks ul{list-style:none;margin:0;padding:0;display:flex;align-items:center;justify-content:center;gap:12px 20px;flex-wrap:wrap}
+.checks li{display:flex;align-items:center;justify-content:center;gap:7px;color:#fff;font-size:14px;white-space:nowrap}
+.checks li span{display:grid;place-items:center;width:20px;height:20px;border-radius:50%;background:#d7f0e5;color:var(--green);font-size:12px;font-weight:900}
+
+@media(max-width:760px){
+  .hero h1{max-width:100%;margin-right:auto;margin-left:auto;text-align:center;font-size:clamp(36px,10.4vw,45px);line-height:1.12}
+  .checks{margin-top:25px}
+  .checks p{font-size:14px;margin-bottom:14px}
+  .checks ul{flex-direction:column;gap:10px}
+  .checks li{font-size:15px}
+}
