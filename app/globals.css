@@ -98,6 +98,10 @@ button{color:inherit}
   background:rgba(255,255,255,.1);padding:15px 18px;outline:0;font-size:16px;border-radius:0
 }
 .fields input:focus{background:rgba(232,91,24,.08);border-right:4px solid var(--orange)}
+.listPriceRow{display:grid;grid-template-columns:1fr auto;align-items:stretch;border-bottom:1px solid rgba(32,34,31,.45)}
+.listPriceRow label{border-bottom:0}
+.unknownPrice{border:0;border-right:1px solid rgba(32,34,31,.35);background:rgba(255,255,255,.14);padding:0 16px;font-size:12px;font-weight:800;color:var(--green);cursor:pointer}
+.unknownPrice.active{background:rgba(232,91,24,.13);color:var(--orange)}
 .full{width:100%}
 .options{display:grid;gap:14px;margin-top:34px}
 .options button{
@@ -181,6 +185,8 @@ button{color:inherit}
   .fields{margin-top:27px}
   .fields label{grid-template-columns:108px 1fr;min-height:64px}
   .fields input{height:63px;min-width:0}
+  .listPriceRow{grid-template-columns:1fr 92px}
+  .unknownPrice{padding:0 8px;font-size:11px}
   .options{gap:13px;margin-top:30px}
   .options button{min-height:66px;padding:11px 14px}
   .optionText{font-size:15px}
