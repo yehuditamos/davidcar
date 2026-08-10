@@ -128,6 +128,7 @@ button{color:inherit}
 .stageTrack i:after{content:"";position:absolute;left:-5px;top:-4px;width:11px;height:11px;border-radius:50%;background:var(--orange)}
 .stageTrack:before{content:"←";position:absolute;left:-4px;top:-15px;color:var(--orange);font-size:20px}
 .stageLabels{direction:rtl;display:flex;justify-content:space-between;font-size:12px;color:#50534d}
+.stageLabels.seven{font-size:10px;gap:6px}
 .nav{display:flex;justify-content:space-between;margin-top:22px;padding-top:16px;border-top:1px solid rgba(32,34,31,.25)}
 .nav button{border:0;background:none;color:#555951;cursor:pointer}.nav button:disabled{opacity:.3}
 .modal{position:fixed;inset:0;background:#17211ddd;display:grid;place-items:center;padding:20px;z-index:10}
@@ -192,6 +193,7 @@ button{color:inherit}
   .optionText{font-size:15px}
   .choiceMark{flex-basis:30px;width:30px;height:30px}
   .inspectionProgress{margin-top:30px}
+  .stageLabels.seven{font-size:9px;letter-spacing:-.03em}
   .resultHead{gap:10px}.resultHead button{font-size:11px;padding:9px}
   .resultHero{padding:34px 18px 26px}
   .verdictStamp{font-size:37px}
