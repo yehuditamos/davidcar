@@ -49,7 +49,7 @@ export default function Home() {
         <p><span>בדיקה חכמה וקפדנית לפני קניית רכב יד שנייה.</span><span>בתוך כחמש דקות תקבלו ציון, דגלים אדומים ופסק דין ברור.</span></p>
         <div className="heroActions"><button className="primary" onClick={()=>setStarted(true)}>מתחילים בדיקה <span>←</span></button><span className="time">כחמש דקות ⏱</span></div>
       </div>
-      <div className="gaugeCard"><div className="carIcon">🚘</div><div className="gauge"><div className="gaugeInner"><b>?</b><span>ציון הרכב</span></div></div><div className="miniFlags"><span>✓ היסטוריית טיפולים</span><span>! תאונות ושלדה</span><span>⌁ נסיעת מבחן</span></div></div>
+      <div className="gaugeCard"><div className="carIcon">🚘</div><div className="gauge"><div className="gaugeInner"><b>?</b><span>ציון הרכב</span></div></div><div className="checks"><p>מה נבדוק?</p><ul><li><span>✓</span> היסטוריית טיפולים</li><li><span>✓</span> תאונות ושלדה</li><li><span>✓</span> נסיעת מבחן</li></ul></div></div>
     </section>
     <section className="trust"><div><b>01</b><span>מכניסים פרטים</span></div><i>←</i><div><b>02</b><span>בודקים כמו מקצוענים</span></div><i>←</i><div><b>03</b><span>מקבלים פסק דין</span></div></section>
     <footer><b>חשוב לדעת:</b> הכלי מסייע בסינון ובהכנה ואינו מחליף בדיקה במכון מורשה, בדיקת מסמכים או ייעוץ מקצועי.</footer>
