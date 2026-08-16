@@ -3,7 +3,8 @@ import { getDb } from "../../../lib/db";
 const allowed = new Set([
   "app_open","check_started","vehicle_details_completed","section_completed",
   "check_completed","phone_consultation_clicked","report_shared",
-  "report_printed","another_vehicle_started"
+  "report_printed","another_vehicle_started",
+  "vehicle_lookup_succeeded","vehicle_lookup_failed"
 ]);
 
 export async function POST(request: Request) {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import styles from "./admin.module.css";
 
 type Option = [string,string,number];
@@ -40,12 +40,8 @@ export default function DavidAdmin() {
     if(response.status===401){setAuthenticated(false);return;}
     if(response.ok){setQuestions(await response.json());setAuthenticated(true);}
   }
-  async function loadStats(range=days) {
-    const response=await fetch(`/api/admin/stats?days=${range}`,{cache:"no-store"});
-    if(response.ok)setStats(await response.json());
-  }
-  useEffect(()=>{loadQuestions()},[]);
-  useEffect(()=>{if(view==="stats"&&authenticated)loadStats(days)},[view,days,authenticated]);
+  useEffect(()=>{fetch("/api/admin/questions",{cache:"no-store"}).then(async response=>{if(response.status===401){setAuthenticated(false);return;}if(response.ok){setQuestions(await response.json());setAuthenticated(true);}})},[]);
+  useEffect(()=>{if(view!=="stats"||!authenticated)return;fetch(`/api/admin/stats?days=${days}`,{cache:"no-store"}).then(async response=>{if(response.ok)setStats(await response.json())})},[view,days,authenticated]);
 
   async function login(e:React.FormEvent) {
     e.preventDefault(); setLoginError("");

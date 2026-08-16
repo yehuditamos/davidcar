@@ -2,9 +2,11 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { track } from "@vercel/analytics";
+import { buildReport, type Finding } from "../lib/report-engine";
 
 type Answers = Record<string, string>;
 type Question = { id:string; section:string; title:string; hint:string; options:[string,string,number][] };
+type VehicleData = {license:string;make:string;model:string;year:string;vehicleType:string;engine:string;version:string;extra:[string,string][]};
 
 const defaultQuestions: Question[] = [
   { id:"seller", section:"מסמכים", title:"הרכב רשום על שם המוכר?", hint:"השוו בין תעודה מזהה לרישיון הרכב.", options:[["yes","כן, הכול תואם",0],["family","רשום על בן משפחה",10],["dealer","המוכר הוא סוחר",14],["unknown","לא בדקתי",22]] },
@@ -30,8 +32,9 @@ const defaultQuestions: Question[] = [
   { id:"belts", section:"חשמל", title:"החגורות והמושבים תקינים?", hint:"משכו כל חגורה ובדקו שהיא ננעלת וחוזרת.", options:[["good","הכול תקין",0],["minor","יש בלאי קל",5],["bad","חגורה או מושב לא תקינים",22],["unknown","לא בדקתי",7]] },
   { id:"odor", section:"חשמל", title:"יש ריח חריג בתוך הרכב?", hint:"ריח עובש, דלק או שרוף דורש בירור.", options:[["none","אין ריח חריג",0],["musty","יש ריח קל של לחות",7],["strong","יש ריח דלק, שרוף או עובש חזק",24],["unknown","לא בטוח/ה",6]] },
 
-  { id:"tires", section:"בלמים", title:"הצמיגים נראים שחוקים או סדוקים?", hint:"עברו סביב הרכב ובדקו את כל ארבעת הצמיגים.", options:[["good","נראים אחידים ותקינים",0],["worn","יש שחיקה קלה",7],["bad","יש סדקים או שחיקה חזקה",20],["unknown","לא יודע/ת לזהות",8]] },
-  { id:"tire_age", section:"בלמים", title:"גיל הצמיגים נבדק?", hint:"ארבע הספרות על הצמיג מציינות שבוע ושנת ייצור.", options:[["new","עד ארבע שנים",0],["old","מעל ארבע שנים",9],["mixed","הצמיגים בגילים שונים",10],["unknown","לא בדקתי",7]] },
+  { id:"tire_wear", section:"צמיגים", title:"כמה עמוקים החריצים בצמיגים?", hint:"הסתכלו על ארבעת הצמיגים. חריצים שכמעט נעלמו מעידים על שחיקה.", options:[["good","עמוקים וברורים",0],["worn","שחוקים חלקית",7],["bad","כמעט חלקים",24],["unknown","לא בטוח/ה",6]] },
+  { id:"tire_cracks", section:"צמיגים", title:"רואים יובש או סדקים בגומי?", hint:"חפשו קווים וסדקים קטנים בדופן הצמיג, גם אם החריצים נראים תקינים.", options:[["none","לא רואים",0],["light","מעט יובש",6],["bad","יש סדקים ברורים",24],["unknown","לא בטוח/ה",6]] },
+  { id:"tire_uneven", section:"צמיגים", title:"השחיקה אחידה לרוחב הצמיג?", hint:"השוו בין הצד הפנימי לחיצוני. צד שחוק יותר עשוי להעיד על צורך בכיוון או תיקון.", options:[["even","אחידה",0],["slight","מעט לא אחידה",7],["bad","צד אחד שחוק משמעותית",18],["unknown","לא בטוח/ה",6]] },
   { id:"brakes", section:"בלמים", title:"איך הרכב בלם בנסיעה?", hint:"בלמו בעדינות במקום בטוח והקשיבו לרעשים.", options:[["good","בלם ישר ובשקט",0],["noise","היה רעש או רעד קל",12],["unsafe","הבלימה חלשה או הרכב סטה",34],["unknown","לא ביצעתי בדיקה",12]] },
 
   { id:"straight", section:"נסיעה", title:"הרכב נוסע ישר?", hint:"בכביש ישר שימו לב אם הוא מושך לצד.", options:[["straight","נוסע ישר",0],["slight","מושך מעט לצד",10],["strong","מושך חזק או רועד",24],["unknown","לא הצלחתי לבדוק",9]] },
@@ -71,7 +74,10 @@ export default function Home() {
   const [started,setStarted] = useState(false);
   const [step,setStep] = useState(0);
   const [answers,setAnswers] = useState<Answers>({});
-  const [car,setCar] = useState({make:"",model:"",year:"",km:"",price:"",listPrice:""});
+  const [car,setCar] = useState({license:"",make:"",model:"",year:"",km:"",price:"",listPrice:""});
+  const [vehicleData,setVehicleData]=useState<VehicleData|null>(null);
+  const [lookupState,setLookupState]=useState<"idle"|"loading"|"found"|"missing">("idle");
+  const [lookupMessage,setLookupMessage]=useState("");
   const [detailsSubmitted,setDetailsSubmitted] = useState(false);
   const [done,setDone] = useState(false);
   const [showExit,setShowExit] = useState(false);
@@ -84,19 +90,30 @@ export default function Home() {
   }, []);
   const rawRisk = useMemo(() => questions.reduce((sum,q) => {
     const picked = q.options.find(o=>o[0]===answers[q.id]); return sum + (picked ? Number(picked[2]) : 0);
-  },0),[answers]);
-  const maxRisk = useMemo(() => questions.reduce((sum,q) => sum + Math.max(...q.options.map(o=>Number(o[2]))),0),[]);
+  },0),[answers,questions]);
+  const maxRisk = useMemo(() => questions.reduce((sum,q) => sum + Math.max(...q.options.map(o=>Number(o[2]))),0),[questions]);
   const score = Math.max(0,100-Math.round((rawRisk/maxRisk)*100));
   const result = riskCopy(100-score);
-  const flags = questions.flatMap(q => { const o=q.options.find(x=>x[0]===answers[q.id]); return o && Number(o[2])>=14 ? [o[1]] : []; });
+  const report=useMemo(()=>buildReport(questions,answers),[questions,answers]);
   const toNumber = (value:string) => Number(value.replace(/[^0-9]/g,"")) || 0;
   const askingPrice = toNumber(car.price);
   const currentListPrice = toNumber(car.listPrice);
   const hasListPrice = car.listPrice !== "unknown" && currentListPrice > 0;
   const negotiationBase = hasListPrice ? Math.min(askingPrice,currentListPrice) : askingPrice;
-  const negotiationDiscount = score >= 82 ? .02 : score >= 65 ? .05 : score >= 45 ? .09 : .14;
-  const negotiationPrice = Math.max(0,Math.round((negotiationBase*(1-negotiationDiscount))/1000)*1000);
   const formatPrice = (value:number) => new Intl.NumberFormat("he-IL").format(value);
+  const recommendedReductionLow=Math.max(report.costLow,Math.round(negotiationBase*(score>=82?.01:score>=65?.03:.05)/500)*500);
+  const recommendedReductionHigh=Math.max(report.costHigh,Math.round(negotiationBase*(score>=82?.03:score>=65?.07:.12)/500)*500);
+  async function lookupVehicle() {
+    const license=car.license.replace(/\D/g,"");
+    if(!/^\d{7,8}$/.test(license)){setLookupState("missing");setLookupMessage("הכניסו מספר רכב בן 7 או 8 ספרות");return;}
+    setLookupState("loading");setLookupMessage("");
+    try {
+      const response=await fetch(`/api/vehicle/${license}`);const data=await response.json();
+      if(!response.ok)throw new Error(data.error||"לא נמצא");
+      setVehicleData(data);setCar(c=>({...c,license,make:data.make||c.make,model:data.model||c.model,year:data.year||c.year}));
+      setLookupState("found");recordEvent("vehicle_lookup_succeeded");
+    } catch(error) {setVehicleData(null);setLookupState("missing");setLookupMessage(error instanceof Error?error.message:"לא הצלחנו לאתר את הרכב");recordEvent("vehicle_lookup_failed");}
+  }
   const choose=(id:string,value:string)=>{ setAnswers(a=>({...a,[id]:value})); setTimeout(()=>{ if(step<questions.length-1) { if(questions[step+1].section!==questions[step].section) recordEvent("section_completed",{section:questions[step].section}); setStep(s=>s+1); } else { recordEvent("check_completed"); setDone(true); } },180); };
   const handleReport = async () => {
     const reportText = [
@@ -104,10 +121,12 @@ export default function Home() {
       `${car.make} ${car.model} · ${car.year} · ${car.km} ק״מ`,
       `ציון: ${score} מתוך 100`,
       `פסק דין: ${result.verdict}`,
-      flags.length ? `דגלים לבדיקה: ${flags.join(" · ")}` : "לא סומנו דגלים אדומים משמעותיים",
+      report.findings.length ? `ליקויים: ${report.findings.map(f=>`${f.answer} (${f.severityScore}/10)`).join(" · ")}` : "לא סומנו ליקויים משמעותיים",
       `מחיר מבוקש: ₪${car.price}`,
       `מחירון עדכני: ${hasListPrice ? `₪${car.listPrice}` : "לא נבדק"}`,
-      `יעד למשא ומתן: ₪${formatPrice(negotiationPrice)}`,
+      `עלויות תיקון משוערות: ₪${formatPrice(report.costLow)}–₪${formatPrice(report.costHigh)}`,
+      `הפחתה מומלצת: ₪${formatPrice(recommendedReductionLow)}–₪${formatPrice(recommendedReductionHigh)}`,
+      `כדאיות העסקה: ${report.viability}`,
     ].join("\n");
 
     if (typeof navigator !== "undefined" && navigator.share) {
@@ -146,13 +165,38 @@ export default function Home() {
     <footer><b>חשוב לדעת:</b> הכלי מסייע בסינון ובהכנה ואינו מחליף בדיקה במכון מורשה, בדיקת מסמכים או ייעוץ מקצועי.</footer>
   </main>;
 
-  if(!detailsSubmitted) return <main className="app" dir="rtl"><div className="appTop"><button className="logoBtn" aria-label="חזרה למסך הפתיחה" onClick={()=>setStarted(false)}>🚘</button><div className="progress"><span>פרטי הרכב</span><div><i style={{width:"8%"}}/></div></div></div><section className="formCard"><span className="stepNum">שלב ראשון</span><h2>איזה רכב מצאתם?</h2><p>נתחיל בפרטים היבשים. אחר כך נצלול למה שבאמת חשוב.</p><div className="fields"><label>יצרן<input value={car.make} onChange={e=>setCar({...car,make:e.target.value})} placeholder="לדוגמה: טויוטה"/></label><label>דגם<input value={car.model} onChange={e=>setCar({...car,model:e.target.value})} placeholder="לדוגמה: קורולה"/></label><label>שנת ייצור<input inputMode="numeric" value={car.year} onChange={e=>setCar({...car,year:e.target.value})} placeholder="2020"/></label><label>קילומטראז׳<input inputMode="numeric" value={car.km} onChange={e=>setCar({...car,km:e.target.value})} placeholder="85,000"/></label><label>מחיר מבוקש ₪<input inputMode="numeric" value={car.price} onChange={e=>setCar({...car,price:e.target.value})} placeholder="72,000"/></label><div className="listPriceRow"><label>מחירון עדכני ₪<input inputMode="numeric" value={car.listPrice==="unknown"?"":car.listPrice} onChange={e=>setCar({...car,listPrice:e.target.value})} placeholder={car.listPrice==="unknown"?"לא נבדק":"לדוגמה: 68,000"}/></label><button type="button" className={car.listPrice==="unknown"?"unknownPrice active":"unknownPrice"} onClick={()=>setCar({...car,listPrice:car.listPrice==="unknown"?"":"unknown"})}>{car.listPrice==="unknown"?"✓ לא בדקתי":"לא בדקתי"}</button></div></div><button className="primary full" disabled={!Object.values(car).every(Boolean)} onClick={()=>{recordEvent("vehicle_details_completed",{list_price_checked:car.listPrice==="unknown"?"no":"yes"});setDetailsSubmitted(true);setStep(0)}}>ממשיכים לבדיקה ←</button></section></main>;
+  if(!detailsSubmitted) return <main className="app" dir="rtl">
+    <div className="appTop"><button className="logoBtn" aria-label="חזרה למסך הפתיחה" onClick={()=>setStarted(false)}>🚘</button><div className="progress"><span>פרטי הרכב</span><div><i style={{width:"8%"}}/></div></div></div>
+    <section className="formCard"><span className="stepNum">שלב ראשון</span><h2>איזה רכב מצאתם?</h2><p>הכניסו מספר רכב ונמלא את הפרטים הקיימים אוטומטית.</p>
+      <div className="licenseLookup"><label>מספר רכב<input inputMode="numeric" value={car.license} onChange={e=>{setCar({...car,license:e.target.value.replace(/\D/g,"").slice(0,8)});setLookupState("idle")}} placeholder="12-345-67"/></label><button type="button" onClick={lookupVehicle} disabled={lookupState==="loading"}>{lookupState==="loading"?"מחפשים...":"זיהוי הרכב"}</button></div>
+      {lookupState==="found"&&vehicleData&&<div className="vehicleFound"><b>✓ הרכב נמצא במאגר הממשלתי</b><strong>{vehicleData.make} {vehicleData.model} · {vehicleData.year}</strong><div>{vehicleData.vehicleType&&<span>סוג: {vehicleData.vehicleType}</span>}{vehicleData.engine&&<span>מנוע: {vehicleData.engine}</span>}{vehicleData.version&&<span>גרסה: {vehicleData.version}</span>}{vehicleData.extra.map(([label,value])=><span key={label}>{label}: {value}</span>)}</div><small>בדקו שהפרטים תואמים לרישיון הרכב.</small></div>}
+      {lookupState==="missing"&&<p className="lookupError">{lookupMessage} השדות הידניים פתוחים להמשך.</p>}
+      <div className="fields"><label>יצרן<input value={car.make} onChange={e=>setCar({...car,make:e.target.value})} placeholder="לדוגמה: טויוטה"/></label><label>דגם<input value={car.model} onChange={e=>setCar({...car,model:e.target.value})} placeholder="לדוגמה: קורולה"/></label><label>שנת ייצור<input inputMode="numeric" value={car.year} onChange={e=>setCar({...car,year:e.target.value})} placeholder="2020"/></label><label>קילומטראז׳<input inputMode="numeric" value={car.km} onChange={e=>setCar({...car,km:e.target.value})} placeholder="85,000"/></label><label>מחיר מבוקש ₪<input inputMode="numeric" value={car.price} onChange={e=>setCar({...car,price:e.target.value})} placeholder="72,000"/></label><div className="listPriceRow"><label>מחירון עדכני ₪<input inputMode="numeric" value={car.listPrice==="unknown"?"":car.listPrice} onChange={e=>setCar({...car,listPrice:e.target.value})} placeholder={car.listPrice==="unknown"?"לא נבדק":"לדוגמה: 68,000"}/></label><button type="button" className={car.listPrice==="unknown"?"unknownPrice active":"unknownPrice"} onClick={()=>setCar({...car,listPrice:car.listPrice==="unknown"?"":"unknown"})}>{car.listPrice==="unknown"?"✓ לא בדקתי":"לא בדקתי"}</button></div></div>
+      <button className="primary full" disabled={!car.license||!car.make||!car.model||!car.year||!car.km||!car.price||!car.listPrice} onClick={()=>{recordEvent("vehicle_details_completed",{list_price_checked:car.listPrice==="unknown"?"no":"yes"});setDetailsSubmitted(true);setStep(0)}}>ממשיכים לבדיקה ←</button>
+    </section></main>;
 
-  if(done) return <main className="resultPage" dir="rtl"><header className="resultHead"><div className="brand"><span className="brandmark" role="img" aria-label="רכב">🚘</span><div><b>המומחה של דוד</b><small>דוח בדיקה ראשוני</small></div></div><button onClick={handleReport}>שיתוף / שמירת הדוח</button></header><section className="resultHero"><span className={`risk ${result.color}`}>{result.label}</span><h1 className={`verdictStamp ${result.color}`}>{result.verdict}</h1><p>{car.make} {car.model} · {car.year} · {car.km} ק״מ</p><div className={`scoreRing ${result.color}`}><strong>{score}</strong><span>מתוך 100</span></div><p className="resultText">{result.text}</p></section><section className="reportGrid"><article><h3>🚩 דגלים שדורשים תשובה</h3>{flags.length ? <ul>{flags.map((f,i)=><li key={i}>{f}</li>)}</ul> : <p className="empty">לא סומנו דגלים אדומים משמעותיים.</p>}</article><article><h3>💬 מה לשאול את המוכר עכשיו</h3><ul><li>אפשר לקבל תיעוד טיפולים וחשבוניות?</li><li>האם הרכב עבר תאונה או תיקון משמעותי?</li><li>האם קיימים שעבודים, עיקולים או התחייבויות?</li><li>האם תסכים לבדיקה במכון שאני בוחר/ת?</li></ul></article><article><h3>🔧 מה לבקש מהמכון לבדוק</h3><ul><li>שלדה, קצות שלדה וסימני תיקון</li><li>מנוע, מערכת קירור, נזילות ולחצי מנוע</li><li>גיר, מתלים, בלמים, היגוי וצמיגים</li><li>סריקת מחשב והיסטוריית תקלות</li></ul></article><article className="price negotiation"><h3>משא ומתן</h3><dl><div><dt>מחיר מבוקש</dt><dd>₪{car.price}</dd></div><div><dt>מחירון עדכני</dt><dd>{hasListPrice ? `₪${car.listPrice}` : "לא נבדק"}</dd></div><div className="targetPrice"><dt>אפשר לשאוף להגיע ל</dt><dd>₪{formatPrice(negotiationPrice)}</dd></div></dl><p>מחיר היעד מחושב לפי המחיר המבוקש, המחירון והליקויים שסומנו. הוא מושפע גם ממצב השוק ומהבדיקה המקצועית.</p><small>זהו כלי עזר למשא ומתן ולא הערכת שמאי.</small></article></section><div className="bottomActions"><a className="primary" href="tel:0527922238" onClick={()=>recordEvent("phone_consultation_clicked")} aria-label="חיוג לדוד להתייעצות טלפונית" style={{textDecoration:"none",textAlign:"center",minWidth:180}}>📞 להתייעצות עם דוד</a><button className="primary" onClick={()=>{setDone(false);setStep(0)}}>חזרה לתשובות</button><button className="secondary" onClick={()=>{recordEvent("another_vehicle_started");setCar({make:"",model:"",year:"",km:"",price:"",listPrice:""});setAnswers({});setDone(false);setStep(0);setDetailsSubmitted(false)}}>בדיקת רכב נוסף</button></div><footer><b>לתשומת לב:</b> זהו דוח סינון ראשוני המבוסס על המידע שמסרתם. הוא אינו מהווה אחריות למצב הרכב ואינו מחליף בדיקה מקצועית ומסמכית.</footer></main>;
+  if(done) return <main className="resultPage" dir="rtl">
+    <header className="resultHead"><div className="brand"><span className="brandmark" role="img" aria-label="רכב">🚘</span><div><b>המומחה של דוד</b><small>דוח החלטה ומשא ומתן</small></div></div><button onClick={handleReport}>שיתוף / שמירת הדוח</button></header>
+    <section className="resultHero"><span className={`risk ${result.color}`}>כדאיות {report.viability}</span><h1>הרכב לא בהכרח תקול.<br/>המחיר צריך להתאים למצב.</h1><p>{car.make} {car.model} · {car.year} · {car.km} ק״מ</p><div className={`scoreRing ${result.color}`}><strong>{score}</strong><span>מתוך 100</span></div><p className="resultText">{result.text}</p></section>
+    <section className="smartSummary"><div><span>הערכת כדאיות</span><b>{report.viability}</b></div><div><span>טווח תיקונים</span><b>₪{formatPrice(report.costLow)}–₪{formatPrice(report.costHigh)}</b></div><div><span>הפחתה מומלצת</span><b>₪{formatPrice(recommendedReductionLow)}–₪{formatPrice(recommendedReductionHigh)}</b></div></section>
+    <section className="severitySections">
+      <FindingGroup title="🔴 ליקויים קריטיים" subtitle="חובה לבירור או טיפול לפני רכישה" findings={report.groups.critical}/>
+      <FindingGroup title="🟠 ליקויים בינוניים" subtitle="משפיעים על המחיר והתחזוקה הקרובה" findings={report.groups.medium}/>
+      <FindingGroup title="🟢 ליקויים קלים" subtitle="לידיעה וכטיעון משלים" findings={report.groups.minor}/>
+    </section>
+    <section className="reportGrid"><article className="repairEstimate"><h3>🔧 הערכת עלויות תיקון</h3><dl><div><dt>טווח נמוך</dt><dd>₪{formatPrice(report.costLow)}</dd></div><div><dt>ממוצע משוער</dt><dd>₪{formatPrice(report.average)}</dd></div><div><dt>טווח גבוה</dt><dd>₪{formatPrice(report.costHigh)}</dd></div></dl><p>טווחי בסיס לצורך סינון ומיקוח. המחיר בפועל תלוי בדגם, בחלקים ובבדיקת מוסך.</p></article><article className="negotiationPoints"><h3>💬 נקודות למיקוח לפי סדר עדיפות</h3>{report.findings.length?<ol>{report.findings.map(f=><li key={f.id}><b>{f.answer}</b><span>{f.priceImpact}</span><p>״{f.negotiation}״</p></li>)}</ol>:<p className="empty">לא נמצאו ליקויים לתמחור. עדיין מומלץ לבצע בדיקה מקצועית.</p>}</article></section>
+    <section className="dealPotential"><span>שורת הסיכום של דוד</span><h2>כדאיות {report.viability} · הפחתה מומלצת ₪{formatPrice(recommendedReductionLow)}–₪{formatPrice(recommendedReductionHigh)}</h2><p>{report.viability==="גבוהה"?"המצב הראשוני נראה טוב. ממשיכים לבדיקה מקצועית וסוגרים רק לאחר אימות.":report.viability==="בינונית"?"יש פוטנציאל לעסקה טובה אם המחיר יגלם את הטיפולים הצפויים.":"העסקה מתאימה רק לאחר בירור מלא, תנאים חזקים והפחתה משמעותית."}</p></section>
+    <div className="bottomActions"><a className="primary" href="tel:0527922238" onClick={()=>recordEvent("phone_consultation_clicked")} aria-label="חיוג לדוד להתייעצות טלפונית" style={{textDecoration:"none",textAlign:"center",minWidth:180}}>📞 להתייעצות עם דוד</a><button className="primary" onClick={()=>{setDone(false);setStep(0)}}>חזרה לתשובות</button><button className="secondary" onClick={()=>{recordEvent("another_vehicle_started");setCar({license:"",make:"",model:"",year:"",km:"",price:"",listPrice:""});setVehicleData(null);setLookupState("idle");setAnswers({});setDone(false);setStep(0);setDetailsSubmitted(false)}}>בדיקת רכב נוסף</button></div>
+    <footer><b>לתשומת לב:</b> זהו דוח סינון ומשא ומתן המבוסס על המידע שמסרתם וטווחי עלות כלליים. הוא אינו מחליף מכון בדיקה, מוסך, שמאי או בדיקת מסמכים.</footer>
+  </main>;
 
   const q=questions[step];
   return <main className="app" dir="rtl"><div className="appTop"><button className="logoBtn" aria-label="פתיחת אפשרויות יציאה" onClick={()=>setShowExit(true)}>🚘</button><div className="progress"><span>שאלה {step+1} מתוך {questions.length}</span><div><i style={{width:`${(step+1)/questions.length*100}%`}}/></div></div><span className="carPill">{car.make} {car.model} · {car.year}</span></div><section className="questionCard"><span className="stepNum">{q.section} · {String(step+1).padStart(2,"0")}</span><h2>{q.title}</h2><p>{q.hint}</p><div className="options">{q.options.map(o=><button key={o[0]} className={answers[q.id]===o[0]?"selected":""} onClick={()=>choose(q.id,o[0])}><b className="optionText">{o[1]}</b><span className="choiceMark" aria-hidden="true"/><i aria-hidden="true">←</i></button>)}</div>{q.id==="service"&&<p className="expertFootnote">לא ראית חשבונית? מבחינתנו זה לא קרה.</p>}<div className="inspectionProgress" aria-label="התקדמות הבדיקה מימין לשמאל">
         <div className="stageTrack"><i style={{width:`${(step+1)/questions.length*100}%`}}/></div>
-        <div className="stageLabels seven"><span>עסקה</span><span>נסיעה</span><span>בלמים</span><span>חשמל</span><span>מנוע</span><span>מרכב</span><span>מסמכים</span></div>
+        <div className="stageLabels"><span>עסקה</span><span>נסיעה</span><span>בלמים</span><span>צמיגים</span><span>חשמל</span><span>מנוע</span><span>מרכב</span><span>מסמכים</span></div>
       </div><div className="nav"><button disabled={step===0} onClick={()=>setStep(s=>s-1)}>→ הקודם</button><button onClick={()=>setShowExit(true)}>שמירה ויציאה</button></div></section>{showExit&&<div className="modal"><div><h3>לעצור את הבדיקה?</h3><p>התשובות נשמרות כל עוד החלון פתוח.</p><button className="primary" onClick={()=>setShowExit(false)}>להמשיך לבדוק</button><button className="secondary" onClick={()=>setStarted(false)}>חזרה להתחלה</button></div></div>}</main>;
+}
+
+function FindingGroup({title,subtitle,findings}:{title:string;subtitle:string;findings:Finding[]}) {
+  return <article><header><div><h2>{title}</h2><p>{subtitle}</p></div><b>{findings.length}</b></header>{findings.length?<div>{findings.map(f=><section key={f.id}><span className="severityScore">{f.severityScore}/10</span><h3>{f.answer}</h3><p>{f.title}</p><dl><div><dt>השפעה על השימוש</dt><dd>{f.impact}</dd></div><div><dt>השפעה על המחיר</dt><dd>{f.priceImpact}</dd></div></dl></section>)}</div>:<p className="empty">לא סומנו ליקויים בקטגוריה זו.</p>}</article>;
 }
