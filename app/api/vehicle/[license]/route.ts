@@ -6,7 +6,17 @@ export async function GET(_:Request,{params}:{params:Promise<{license:string}>})
   if (!/^\d{7,8}$/.test(clean)) return Response.json({error:"מספר רכב חייב להכיל 7 או 8 ספרות"},{status:400});
   try {
     const query=new URLSearchParams({resource_id:RESOURCE_ID,limit:"1",filters:JSON.stringify({mispar_rechev:Number(clean)})});
-    const response=await fetch(`https://data.gov.il/api/3/action/datastore_search?${query}`,{signal:AbortSignal.timeout(8000),next:{revalidate:86400}});
+    const sourceUrl=`https://data.gov.il/api/3/action/datastore_search?${query}`;
+    let response:Response|undefined;
+    for(let attempt=0;attempt<2;attempt++) {
+      try {
+        response=await fetch(sourceUrl,{signal:AbortSignal.timeout(20000),headers:{Accept:"application/json","User-Agent":"DavidCar/1.0 (+https://davidcar.vercel.app)"},next:{revalidate:86400}});
+        if(response.ok)break;
+      } catch(error) {
+        if(attempt===1)throw error;
+      }
+    }
+    if(!response)throw new Error("vehicle source did not respond");
     if(!response.ok) throw new Error("vehicle source unavailable");
     const payload=await response.json();
     const row=payload?.result?.records?.[0];
@@ -20,7 +30,8 @@ export async function GET(_:Request,{params}:{params:Promise<{license:string}>})
     const typeNames:Record<string,string>={P:"פרטי",M:"מסחרי",T:"מונית"};
     const engine=row.nefach_manoa?`${row.nefach_manoa} סמ״ק`:row.degem_manoa?`דגם מנוע ${row.degem_manoa}`:"";
     return Response.json({license:clean,make:row.tozeret_nm||"",model:row.kinuy_mishari||row.degem_nm||"",year:String(row.shnat_yitzur||""),vehicleType:row.sug_rechev_nm||typeNames[row.sug_degem]||row.sug_degem||"",engine,version:row.ramat_gimur||"",extra});
-  } catch {
+  } catch(error) {
+    console.error("vehicle_lookup_failed",error instanceof Error?error.message:String(error));
     return Response.json({error:"לא הצלחנו להתחבר כרגע למאגר. אפשר להמשיך במילוי ידני."},{status:503});
   }
 }
