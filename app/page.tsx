@@ -93,8 +93,9 @@ export default function Home() {
   },0),[answers,questions]);
   const maxRisk = useMemo(() => questions.reduce((sum,q) => sum + Math.max(...q.options.map(o=>Number(o[2]))),0),[questions]);
   const score = Math.max(0,100-Math.round((rawRisk/maxRisk)*100));
-  const result = riskCopy(100-score);
   const report=useMemo(()=>buildReport(questions,answers),[questions,answers]);
+  const decisionScore=report.groups.critical.length>=2?Math.min(score,35):report.groups.critical.length===1?Math.min(score,58):report.groups.medium.length>=3?Math.min(score,68):score;
+  const result = riskCopy(100-decisionScore);
   const toNumber = (value:string) => Number(value.replace(/[^0-9]/g,"")) || 0;
   const askingPrice = toNumber(car.price);
   const currentListPrice = toNumber(car.listPrice);
@@ -119,7 +120,7 @@ export default function Home() {
     const reportText = [
       "דוח בדיקה ראשוני – המומחה של דוד",
       `${car.make} ${car.model} · ${car.year} · ${car.km} ק״מ`,
-      `ציון: ${score} מתוך 100`,
+      `ציון: ${decisionScore} מתוך 100`,
       `פסק דין: ${result.verdict}`,
       report.findings.length ? `ליקויים: ${report.findings.map(f=>`${f.answer} (${f.severityScore}/10)`).join(" · ")}` : "לא סומנו ליקויים משמעותיים",
       `מחיר מבוקש: ₪${car.price}`,
@@ -177,7 +178,7 @@ export default function Home() {
 
   if(done) return <main className="resultPage" dir="rtl">
     <header className="resultHead"><div className="brand"><span className="brandmark" role="img" aria-label="רכב">🚘</span><div><b>המומחה של דוד</b><small>דוח החלטה ומשא ומתן</small></div></div><button onClick={handleReport}>שיתוף / שמירת הדוח</button></header>
-    <section className="resultHero"><span className={`risk ${result.color}`}>כדאיות {report.viability}</span><h1>הרכב לא בהכרח תקול.<br/>המחיר צריך להתאים למצב.</h1><p>{car.make} {car.model} · {car.year} · {car.km} ק״מ</p><div className={`scoreRing ${result.color}`}><strong>{score}</strong><span>מתוך 100</span></div><p className="resultText">{result.text}</p></section>
+    <section className="resultHero"><span className={`risk ${result.color}`}>כדאיות {report.viability}</span><h1>הרכב לא בהכרח תקול.<br/>המחיר צריך להתאים למצב.</h1><p>{car.make} {car.model} · {car.year} · {car.km} ק״מ</p><div className={`scoreRing ${result.color}`}><strong>{decisionScore}</strong><span>מתוך 100</span></div><p className="resultText">{result.text}</p></section>
     <section className="smartSummary"><div><span>הערכת כדאיות</span><b>{report.viability}</b></div><div><span>טווח תיקונים</span><b>₪{formatPrice(report.costLow)}–₪{formatPrice(report.costHigh)}</b></div><div><span>הפחתה מומלצת</span><b>₪{formatPrice(recommendedReductionLow)}–₪{formatPrice(recommendedReductionHigh)}</b></div></section>
     <section className="severitySections">
       <FindingGroup title="🔴 ליקויים קריטיים" subtitle="חובה לבירור או טיפול לפני רכישה" findings={report.groups.critical}/>
